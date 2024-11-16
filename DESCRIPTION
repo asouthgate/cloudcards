@@ -1,0 +1,19 @@
+Package: cloudcards
+Type: Package
+Title: cloudcards
+Version: 0.1.0
+Author: Your Name <your.email@example.com>
+Maintainer: Your Name <your.email@example.com>
+Description: An R package that provides a priority queue cards from a db
+Depends:
+    R (>= 3.5.0)
+Imports:
+    DBI,
+    RPostgres,
+    R6,
+    testthat,
+    dplyr
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Config/testthat/edition: 3

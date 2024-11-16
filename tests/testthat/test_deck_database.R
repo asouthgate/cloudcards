@@ -31,3 +31,24 @@ test_that("We can write a new card to DeckDatabase successfully", {
     db$close()
 })
 
+test_that("We can update a card successfully", {
+    db <- DeckDatabase$new(
+        "localhost", 5432,
+        "cloudcards", "cloudcards", 
+        "cloudcards"
+    )
+    card <- data.table(
+        question = "Foo?",
+        answer = "Bar",
+        counter = 0,
+        created_at = Sys.time(),
+        last_accessed = Sys.time()
+    )
+    id <- db$write_new_card(card)
+    stored_card <- db$fetch_card(id)
+    stored_card$answer <- "Baz!"
+    db$update_card(stored_card)
+    result <- db$fetch_card(id)
+    expect_equal(result$answer, "Baz!")
+    db$close()
+})

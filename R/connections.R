@@ -28,8 +28,26 @@ DeckDatabase <- R6::R6Class(
             data <- DBI::dbGetQuery(private$con, "SELECT * FROM cloudcards")
             as.data.table(data)
         },
+        fetch_card = function(id) {
+            data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards where id = ", id))
+            as.data.table(data)
+        },
         write_new_card = function(new_card) {
-            dbWriteTable(private$con, "cloudcards", new_card, append = TRUE, row.names = FALSE)
+            columns <- names(new_card)
+            value_placeholders <- paste0("$", seq_along(columns), collapse = ", ")
+            column_names <- paste(columns, collapse = ", ")
+            query <- paste0("INSERT INTO cloudcards (", column_names, ") ",
+                          "VALUES (", value_placeholders, ") RETURNING id")
+            params <- unname(as.list(new_card))
+            result <- DBI::dbGetQuery(private$con, query, params = params)
+            return(result$id)
+        },
+        update_card = function(card) {         
+            update_cols <- card[, setdiff(names(card), "id"), with = FALSE]
+            set_clause <- paste0(names(update_cols), " = $", seq_along(update_cols), collapse = ", ")
+            query <- paste0("UPDATE cloudcards SET ", set_clause, " WHERE id = ", card$id)
+            params <- unname(as.list(update_cols))
+            DBI::dbExecute(private$con, query, params = params)
         },
         close = function() {
             DBI::dbDisconnect(private$con)

@@ -3,3 +3,7 @@ import(RPostgres)
 import(R6)
 import(testthat)
 import(dplyr)
+
+importFrom(data.table, data.table)
+
+export(DeckDatabase)

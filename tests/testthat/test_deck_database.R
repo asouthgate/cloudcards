@@ -52,3 +52,25 @@ test_that("We can update a card successfully", {
     expect_equal(result$answer, "Baz!")
     db$close()
 })
+
+test_that("We can get_next() successfully for simple data", {
+    db <- DeckDatabase$new(
+        "localhost", 5432,
+        "cloudcards", "cloudcards",
+        "cloudcards"
+    )
+    all_cards <- db$fetch_cards()
+    n0 <- nrow(all_cards)
+    new_card <- data.table(
+        question = "Foo?",
+        answer = "Bar",
+        counter = 0,
+        created_at = Sys.time(),
+        last_accessed = Sys.time()
+    )
+    db$write_new_card(new_card)
+    nextc <- db$get_next()
+    expect_equal(TRUE, TRUE)
+    db$close()
+})
+

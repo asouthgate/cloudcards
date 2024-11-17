@@ -1,26 +1,10 @@
-#' Exponential function with an affine exponent in x
-#'
-#' Calculates the time before the next event as:
-#'  x^(a + x * b)
-#'
-#' @param x Input sequence
-#' @param a Constant exponent
-#' @param b Scalar for exponent
-#'
-#' @return Time in seconds until next event is scheduled.
-exponential_affine_exponent <- function(x, a, b) {
-    x^(a + b * x)
-}
-
-
 # TODO: support online optimization
 
 #' TimeDeltaCalculator
 #'
 #' Calculates future event times
 #'
-#' @import R6A
-#' @export
+#' @import R6
 TimeDeltaCalculator <- R6::R6Class(
     "TimeDeltaCalculator",
     public = list(
@@ -28,7 +12,12 @@ TimeDeltaCalculator <- R6::R6Class(
 
         },
         cal_time_delta = function(x) {
-            exponential_affine_exponent(x, 1.0, 0.5) 
+            private$expf(x, 1.0, 0.5) 
+        }
+    ),
+    private = list(
+        expf = function(x, a, b) {
+            x^(a + b * x)
         }
     )
 )

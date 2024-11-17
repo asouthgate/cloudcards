@@ -12,7 +12,8 @@ Imports:
     RPostgres,
     R6,
     testthat,
-    dplyr
+    dplyr,
+    data.table
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

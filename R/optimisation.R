@@ -27,7 +27,7 @@ TimeDeltaCalculator <- R6::R6Class(
         initialize = function() {
 
         },
-        cal_delta = function(x) {
+        cal_time_delta = function(x) {
             exponential_affine_exponent(x, 1.0, 0.5) 
         }
     )

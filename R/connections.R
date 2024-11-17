@@ -1,3 +1,5 @@
+library(data.table)
+
 #' DeckDatabase
 #'
 #' Abstract interface to database containing deck of flash cards
@@ -49,12 +51,24 @@ DeckDatabase <- R6::R6Class(
             params <- unname(as.list(update_cols))
             DBI::dbExecute(private$con, query, params = params)
         },
+        get_next = function() {
+            cards <- self$fetch_cards();
+            cal_due <- function(d, counter) {
+                d <- as.POSIXct(d)
+                dt <- private$time_delta_calculator$cal_time_delta()
+                return(d + dt)
+            }
+            cards[, due := pcal_due(last_accessed, counter)]
+            minc <- cards[which.min(due)]
+            return(minc)
+        },
         close = function() {
             DBI::dbDisconnect(private$con)
             private$con <- NULL
         }
     ),
     private = list(
-        con = NULL
+        con = NULL,
+        time_delta_calculator = TimeDeltaCalculator$new()
     )
 )

@@ -55,6 +55,14 @@ DeckDatabase <- R6::R6Class(
             query <- paste0("DELETE FROM cloudcards WHERE id = ", id)
             data <- DBI::dbExecute(private$con, query)
         },
+        activate_new_cards = function(n) {
+            cards <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards WHERE active = FALSE LIMIT ", n))
+            cards <- as.data.table(cards)
+            cards[, active := TRUE]
+            for (i in 1:nrow(cards)) {
+              self$update_card(cards[i,])
+            }
+        },
         update_card = function(card) {         
             card$last_accessed <- Sys.time()
             card$due <- card$last_accessed + private$time_delta_calculator$cal_time_delta(card$counter)
@@ -64,8 +72,8 @@ DeckDatabase <- R6::R6Class(
             params <- unname(as.list(update_cols))
             DBI::dbExecute(private$con, query, params = params)
         },
-        get_next = function() {
-            cards <- self$fetch_cards();
+        get_next = function(active=NULL) {
+            cards <- self$fetch_cards(active);
             mininds <- which.min(cards$due)
             if (length(mininds) > 1) {
                 mini <- sample(mininds, 1)

@@ -28,7 +28,7 @@ server <- function(input, output, session) {
   
   observe({
     if (ready_to_deal() == TRUE) {
-        card <- deckdb$get_next()
+        card <- deckdb$get_next(TRUE)
         dt <- as.numeric(difftime(card$due, Sys.time(), units = "secs"))
         dt <- max(0.0, dt)
         if (dt == 0.0) {
@@ -36,7 +36,8 @@ server <- function(input, output, session) {
             currqa(card$question)
             ready_to_deal(FALSE)
         }
-        invalidateLater(dt * 1000, session)
+#        invalidateLater(dt * 1000, session)
+        invalidateLater(100, session)
     } else {
         invalidateLater(100, session)
     }
@@ -45,7 +46,7 @@ server <- function(input, output, session) {
   observe({
     cards <- deckdb$get_sorted_cards()
     cards$mindue2 <- pmax(cards$due, Sys.time())
-    formatted_table <- capture.output(print(head(cards), row.names = FALSE))
+    formatted_table <- capture.output(print(cards, row.names = FALSE))
     out <- paste(formatted_table, collapse = "\n")
     out <- paste(out, Sys.time())
     debug_deck(out)
@@ -62,6 +63,7 @@ server <- function(input, output, session) {
         card$counter = 0
         deckdb$update_card(card)   
         currcard("")
+        currqa("")
         ready_to_deal(TRUE)
     }
   })
@@ -86,6 +88,7 @@ server <- function(input, output, session) {
     cc <- currcard()
     deckdb$delete_card(cc$id)
     currcard("")
+    currqa("")
     ready_to_deal(TRUE)
   })
 
@@ -95,12 +98,14 @@ server <- function(input, output, session) {
         card$counter = card$counter + 1
         deckdb$update_card(card)
         currcard("")
+        currqa("")
         ready_to_deal(TRUE)
     }
   })
 
   observeEvent(input$nextb, {
-    print(paste("The value is:", input$integer_box))
+    cards <- deckdb$activate_new_cards(as.numeric(input$integer_box)) 
+    ready_to_deal(TRUE)
   })
 
   output$question_answer <- renderText({

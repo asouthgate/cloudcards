@@ -28,8 +28,12 @@ DeckDatabase <- R6::R6Class(
                 password = password
             )
         },
-        fetch_cards = function() {
-            data <- DBI::dbGetQuery(private$con, "SELECT * FROM cloudcards")
+        fetch_cards = function(active=NULL) {
+            if (is.null(active)) {
+                data <- DBI::dbGetQuery(private$con, "SELECT * FROM cloudcards")
+            } else {
+                data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards WHERE active = ", active))
+            }
             as.data.table(data)
         },
         fetch_card = function(id) {

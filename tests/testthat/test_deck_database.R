@@ -92,3 +92,25 @@ test_that("We can get_next() successfully for simple data", {
     db$close()
 })
 
+test_that("We can fetch_cards successfully with active flags specified", {
+    db <- DeckDatabase$new(
+        "localhost", 5432,
+        "cloudcards", "cloudcards",
+        "cloudcards"
+    )
+    card1 <- get_random_card()
+    card1$active <- TRUE
+    id1 <- db$write_new_card(card1)
+    card2 <- get_random_card()
+    card2$active <- FALSE
+    id2 <- db$write_new_card(card2)
+
+    active_cards <- db$fetch_cards(active="TRUE")$id
+    inactive_cards <- db$fetch_cards(active="FALSE")$id
+    all_cards <- db$fetch_cards()$id
+
+    expect_equal(id1 %in% active_cards, TRUE)
+    expect_equal(id2 %in% inactive_cards, TRUE)
+    expect_equal(id1 %in% all_cards, TRUE)
+    expect_equal(id2 %in% all_cards, TRUE)
+})

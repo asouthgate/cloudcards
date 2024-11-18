@@ -47,6 +47,10 @@ DeckDatabase <- R6::R6Class(
             result <- DBI::dbGetQuery(private$con, query, params = params)
             return(result$id)
         },
+        delete_card = function(id) {
+            query <- paste0("DELETE FROM cloudcards WHERE id = ", id)
+            data <- DBI::dbExecute(private$con, query)
+        },
         update_card = function(card) {         
             card$last_accessed <- Sys.time()
             card$due <- card$last_accessed + private$time_delta_calculator$cal_time_delta(card$counter)

@@ -38,6 +38,29 @@ test_that("We can write a new card to DeckDatabase successfully", {
     db$close()
 })
 
+test_that("We can successfully delete a card from the databas", {
+    db <- DeckDatabase$new(
+        "localhost", 5432,
+        "cloudcards", "cloudcards",
+        "cloudcards"
+    )
+    new_card <- get_random_card()
+    id <- db$write_new_card(new_card)
+    card <- db$fetch_card(id)
+    db$delete_card(id)
+    tryCatch(
+        {
+            card <- db$fetch_card(id)    
+            expect_equal(FALSE, TRUE)
+        },
+        error = function(e) {
+            expect_equal(TRUE, TRUE)
+            return(NULL)
+        }
+    )
+    expect_equal(FALSE, FALSE)
+})
+
 test_that("We can update a card successfully", {
     db <- DeckDatabase$new(
         "localhost", 5432,

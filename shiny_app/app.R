@@ -5,9 +5,11 @@ library(shiny)
 ui <- fluidPage(
   textOutput("question_answer"),
   verbatimTextOutput("DEBUG_INFO"),
+  actionButton("reveal", "Reveal"),
   actionButton("yes", "Yes"),
   actionButton("no", "No"),
-  actionButton("nextb", "Next"),
+  numericInput("integer_box", "Enter an integer:", value = 3, step = 1),
+  actionButton("nextb", "Activate"),
   actionButton("delete", "Delete")
 )
 
@@ -19,6 +21,7 @@ server <- function(input, output, session) {
       "cloudcards"
   )
 
+  currqa <- reactiveVal("")
   currcard <- reactiveVal("")
   ready_to_deal <- reactiveVal(TRUE) 
   debug_deck <- reactiveVal("")
@@ -30,6 +33,7 @@ server <- function(input, output, session) {
         dt <- max(0.0, dt)
         if (dt == 0.0) {
             currcard(card) 
+            currqa(card$question)
             ready_to_deal(FALSE)
         }
         invalidateLater(dt * 1000, session)
@@ -47,6 +51,10 @@ server <- function(input, output, session) {
     debug_deck(out)
     invalidateLater(500, session)
   })
+
+  observeEvent(input$reveal, {
+    currqa(paste(currcard()$question, currcard()$answer))
+  }) 
 
   observeEvent(input$no, {
     if (ready_to_deal() == FALSE) {  # a card is not out
@@ -92,12 +100,11 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$nextb, {
-    ready_to_deal(TRUE)
+    print(paste("The value is:", input$integer_box))
   })
-  
+
   output$question_answer <- renderText({
-    cc <- currcard()
-    paste(format(cc))
+    currqa()
   })
 
   output$DEBUG_INFO <- renderText({

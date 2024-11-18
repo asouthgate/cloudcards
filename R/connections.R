@@ -37,6 +37,7 @@ DeckDatabase <- R6::R6Class(
             as.data.table(data)
         },
         write_new_card = function(new_card) {
+            new_card$due <- new_card$last_accessed + private$time_delta_calculator$cal_time_delta(new_card$counter)
             columns <- names(new_card)
             value_placeholders <- paste0("$", seq_along(columns), collapse = ", ")
             column_names <- paste(columns, collapse = ", ")
@@ -47,6 +48,8 @@ DeckDatabase <- R6::R6Class(
             return(result$id)
         },
         update_card = function(card) {         
+            card$last_accessed <- Sys.time()
+            card$due <- card$last_accessed + private$time_delta_calculator$cal_time_delta(card$counter)
             update_cols <- card[, setdiff(names(card), "id"), with = FALSE]
             set_clause <- paste0(names(update_cols), " = $", seq_along(update_cols), collapse = ", ")
             query <- paste0("UPDATE cloudcards SET ", set_clause, " WHERE id = ", card$id)
@@ -55,10 +58,21 @@ DeckDatabase <- R6::R6Class(
         },
         get_next = function() {
             cards <- self$fetch_cards();
+            mininds <- which.min(cards$due)
+            if (length(mininds) > 1) {
+                mini <- sample(mininds, 1)
+            } else {
+                mini <- mininds[1]
+            }
+            minc <- cards[mini] 
+            return(minc)
+        },
+        get_sorted_cards = function() {
+            cards <- self$fetch_cards();
             dt <- private$time_delta_calculator$cal_time_delta(cards$counter)
-            calculated_due <- cards$last_accessed + as.difftime(dt, units = "secs") 
-            mini <- which.min(calculated_due)
-            return(list(card=cards[mini], dt=dt[mini]))
+            calculated_due <- cards$last_accessed + as.difftime(dt, units = "secs")
+            ordering <- order(calculated_due)
+            return(cards[ordering])
         },
         close = function() {
             DBI::dbDisconnect(private$con)

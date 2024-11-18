@@ -1,5 +1,18 @@
 library(testthat)
 
+get_random_card <- function() {
+    random_q <- paste0(sample(LETTERS, 5, replace = TRUE), collapse = "")
+    random_q <- paste("what is", random_q)
+    new_card <- data.table(
+        question = random_q,
+        answer = "Bar",
+        counter = 0,
+        created_at = Sys.time(),
+        last_accessed = Sys.time()
+    )
+    return(new_card)
+}
+
 test_that("DeckDatabase can open and close successfully", {
     db <- DeckDatabase$new(
         "localhost", 5432,
@@ -18,13 +31,7 @@ test_that("We can write a new card to DeckDatabase successfully", {
     )
     all_cards <- db$fetch_cards()
     n0 <- nrow(all_cards)
-    new_card <- data.table(
-        question = "Foo?",
-        answer = "Bar",
-        counter = 0,
-        created_at = Sys.time(),
-        last_accessed = Sys.time()
-    )
+    new_card <- get_random_card()
     db$write_new_card(new_card)
     all_cards <- db$fetch_cards()
     expect_equal(nrow(all_cards), n0 + 1)
@@ -37,13 +44,7 @@ test_that("We can update a card successfully", {
         "cloudcards", "cloudcards", 
         "cloudcards"
     )
-    card <- data.table(
-        question = "Foo?",
-        answer = "Bar",
-        counter = 0,
-        created_at = Sys.time(),
-        last_accessed = Sys.time()
-    )
+    card <- get_random_card()
     id <- db$write_new_card(card)
     stored_card <- db$fetch_card(id)
     stored_card$answer <- "Baz!"
@@ -61,13 +62,7 @@ test_that("We can get_next() successfully for simple data", {
     )
     all_cards <- db$fetch_cards()
     n0 <- nrow(all_cards)
-    new_card <- data.table(
-        question = "Foo?",
-        answer = "Bar",
-        counter = 0,
-        created_at = Sys.time(),
-        last_accessed = Sys.time()
-    )
+    new_card <- get_random_card()
     db$write_new_card(new_card)
     nextc <- db$get_next()
     expect_equal(TRUE, TRUE)

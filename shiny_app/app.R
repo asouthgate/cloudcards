@@ -7,7 +7,8 @@ ui <- fluidPage(
   verbatimTextOutput("DEBUG_INFO"),
   actionButton("yes", "Yes"),
   actionButton("no", "No"),
-  actionButton("nextb", "Next")
+  actionButton("nextb", "Next"),
+  actionButton("delete", "Delete")
 )
 
 server <- function(input, output, session) {
@@ -55,6 +56,29 @@ server <- function(input, output, session) {
         currcard("")
         ready_to_deal(TRUE)
     }
+  })
+
+  observeEvent(input$delete, {
+    cc <- currcard()
+    txt <- paste("Are you sure you want to delete this card?", cc$question, cc$answer)
+    showModal(
+      modalDialog(
+        title = "Are you sure you want to delete this card?",
+        txt,
+        footer = tagList(
+          modalButton("Cancel"),
+          actionButton("confirm_yes", "Yes")
+        )
+      )
+    )
+  })
+
+  observeEvent(input$confirm_yes, {
+    removeModal()
+    cc <- currcard()
+    deckdb$delete_card(cc$id)
+    currcard("")
+    ready_to_deal(TRUE)
   })
 
   observeEvent(input$yes, {

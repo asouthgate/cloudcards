@@ -63,8 +63,10 @@ server <- function(input, output, session) {
   observeEvent(input$no, {
     if (ready_to_deal() == FALSE) {  # a card is not out
         card <- currcard()
+        dt <- card
         card$counter = 0
         deckdb$update_card(card)   
+        deckdb$write_stats(FALSE, card)
         currcard("")
         currqa("")
         ready_to_deal(TRUE)
@@ -100,6 +102,7 @@ server <- function(input, output, session) {
         card <- currcard()
         card$counter = card$counter + 1
         deckdb$update_card(card)
+        deckdb$write_stats(TRUE, card)
         currcard("")
         currqa("")
         ready_to_deal(TRUE)

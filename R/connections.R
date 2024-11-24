@@ -107,6 +107,25 @@ DeckDatabase <- R6::R6Class(
             params <- unname(as.list(update_cols))
             DBI::dbExecute(private$con, query, params = params)
         },
+        write_stats = function(result, card) {
+            assigned_dt <- as.numeric(difftime(card$due, card$last_accessed, units = "secs"))
+            real_dt <- as.numeric(difftime(card$due, Sys.time(), units = "secs"))
+            data <- data.table(
+                question = card$question,
+                answer = card$answer,
+                counter = 0,
+                assigned_dt = assigned_dt,
+                real_dt = real_dt,
+                result = result
+            )
+            columns <- names(data)
+            value_placeholders <- paste0("$", seq_along(columns), collapse = ", ")
+            column_names <- paste(columns, collapse = ", ")
+            query <- paste0("INSERT INTO stats (", column_names, ") ",
+                          "VALUES (", value_placeholders, ")")
+            params <- unname(as.list(data))
+            result <- DBI::dbExecute(private$con, query, params = params) 
+        },
         write_qa = function(q, a) {
             new_card <- data.table(
                 question = q,

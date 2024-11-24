@@ -29,50 +29,6 @@ DeckDatabase <- R6::R6Class(
                 password = password
             )
         },
-        fetch_cards = function(active=NULL) {
-            if (is.null(active)) {
-                data <- DBI::dbGetQuery(private$con, "SELECT * FROM cloudcards")
-            } else {
-                data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards WHERE active = ", active))
-            }
-            as.data.table(data)
-        },
-        fetch_card = function(id) {
-            data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards where id = ", id))
-            as.data.table(data)
-        },
-        write_qa = function(q, a) {
-            new_card <- data.table(
-                question = q,
-                answer = a,
-                counter = 0,
-                created_at = Sys.time(),
-                last_accessed = Sys.time()
-            )
-            self$write_new_card(new_card)
-        },
-        write_new_card = function(new_card) {
-
-            log4r::info(
-              logger,
-              message = "Writing a new card",
-              card = format(new_card)
-            )
-
-            new_card$due <- new_card$last_accessed + private$time_delta_calculator$cal_time_delta(new_card$counter)
-            columns <- names(new_card)
-            value_placeholders <- paste0("$", seq_along(columns), collapse = ", ")
-            column_names <- paste(columns, collapse = ", ")
-            query <- paste0("INSERT INTO cloudcards (", column_names, ") ",
-                          "VALUES (", value_placeholders, ") RETURNING id")
-            params <- unname(as.list(new_card))
-            result <- DBI::dbGetQuery(private$con, query, params = params)
-            return(result$id)
-        },
-        delete_card = function(id) {
-            query <- paste0("DELETE FROM cloudcards WHERE id = ", id)
-            data <- DBI::dbExecute(private$con, query)
-        },
         activate_new_cards = function(n) {
 
             log4r::info(
@@ -95,6 +51,46 @@ DeckDatabase <- R6::R6Class(
               self$update_card(cards[i,])
             }
         },
+        close = function() {
+            DBI::dbDisconnect(private$con)
+            private$con <- NULL
+        },
+        delete_card = function(id) {
+            query <- paste0("DELETE FROM cloudcards WHERE id = ", id)
+            data <- DBI::dbExecute(private$con, query)
+        },
+        fetch_cards = function(active=NULL) {
+            if (is.null(active)) {
+                data <- DBI::dbGetQuery(private$con, "SELECT * FROM cloudcards")
+            } else {
+                data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards WHERE active = ", active))
+            }
+            as.data.table(data)
+        },
+        fetch_card = function(id) {
+            data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards where id = ", id))
+            as.data.table(data)
+        },
+        get_next = function(active=NULL) {
+            cards <- self$fetch_cards(active);
+            if (nrow(cards) == 0) {
+                return(NULL)
+            }
+            mininds <- which.min(cards$due)
+            if (length(mininds) > 1) {
+                mini <- sample(mininds, 1)
+            } else {
+                mini <- mininds[1]
+            }
+            minc <- cards[mini] 
+            return(minc)
+        },
+        get_sorted_cards = function() {
+            cards <- self$fetch_cards();
+            due <- cards$due
+            ordering <- order(due)
+            return(cards[ordering])
+        },
         update_card = function(card) {         
 
             log4r::info(
@@ -111,27 +107,34 @@ DeckDatabase <- R6::R6Class(
             params <- unname(as.list(update_cols))
             DBI::dbExecute(private$con, query, params = params)
         },
-        get_next = function(active=NULL) {
-            cards <- self$fetch_cards(active);
-            mininds <- which.min(cards$due)
-            if (length(mininds) > 1) {
-                mini <- sample(mininds, 1)
-            } else {
-                mini <- mininds[1]
-            }
-            minc <- cards[mini] 
-            return(minc)
+        write_qa = function(q, a) {
+            new_card <- data.table(
+                question = q,
+                answer = a,
+                counter = 0,
+                created_at = Sys.time(),
+                last_accessed = Sys.time(),
+                active = TRUE
+            )
+            self$write_new_card(new_card)
         },
-        get_sorted_cards = function() {
-            cards <- self$fetch_cards();
-            dt <- private$time_delta_calculator$cal_time_delta(cards$counter)
-            calculated_due <- cards$last_accessed + as.difftime(dt, units = "secs")
-            ordering <- order(calculated_due)
-            return(cards[ordering])
-        },
-        close = function() {
-            DBI::dbDisconnect(private$con)
-            private$con <- NULL
+        write_new_card = function(new_card) {
+
+            log4r::info(
+              logger,
+              message = "Writing a new card",
+              card = format(new_card)
+            )
+
+            new_card$due <- new_card$last_accessed + private$time_delta_calculator$cal_time_delta(new_card$counter)
+            columns <- names(new_card)
+            value_placeholders <- paste0("$", seq_along(columns), collapse = ", ")
+            column_names <- paste(columns, collapse = ", ")
+            query <- paste0("INSERT INTO cloudcards (", column_names, ") ",
+                          "VALUES (", value_placeholders, ") RETURNING id")
+            params <- unname(as.list(new_card))
+            result <- DBI::dbGetQuery(private$con, query, params = params)
+            return(result$id)
         }
     ),
     private = list(

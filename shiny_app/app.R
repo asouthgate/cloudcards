@@ -31,14 +31,15 @@ server <- function(input, output, session) {
   observe({
     if (ready_to_deal() == TRUE) {
         card <- deckdb$get_next(TRUE)
-        dt <- as.numeric(difftime(card$due, Sys.time(), units = "secs"))
-        dt <- max(0.0, dt)
-        if (dt == 0.0) {
-            currcard(card) 
-            currqa(card$question)
-            ready_to_deal(FALSE)
+        if (!is.null(card)) {
+            dt <- as.numeric(difftime(card$due, Sys.time(), units = "secs"))
+            dt <- max(0.0, dt)
+            if (dt == 0.0) {
+                currcard(card) 
+                currqa(card$question)
+                ready_to_deal(FALSE)
+            }
         }
-#        invalidateLater(dt * 1000, session)
         invalidateLater(100, session)
     } else {
         invalidateLater(100, session)

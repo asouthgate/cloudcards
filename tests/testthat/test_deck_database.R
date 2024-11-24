@@ -114,3 +114,20 @@ test_that("We can fetch_cards successfully with active flags specified", {
     expect_equal(id1 %in% all_cards, TRUE)
     expect_equal(id2 %in% all_cards, TRUE)
 })
+
+test_that("Trivial stat writing works", {
+    db <- DeckDatabase$new(
+        "localhost", 5432,
+        "cloudcards", "cloudcards",
+        "cloudcards"
+    )
+    card <- get_random_card()
+    card$active <- TRUE
+    id1 <- db$write_new_card(card)
+    card <- db$fetch_card(id1)
+    db$write_stats(TRUE, card)
+    db$write_stats(TRUE, card)
+    db$write_stats(FALSE, card)
+    stats <- tail(db$fetch_stats(), 3)
+    expect_equal(stats$result, c(TRUE, TRUE, FALSE))
+})

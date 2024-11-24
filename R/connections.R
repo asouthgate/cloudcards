@@ -67,6 +67,10 @@ DeckDatabase <- R6::R6Class(
             }
             as.data.table(data)
         },
+        fetch_stats = function() {
+            data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM stats"))
+            as.data.table(data)
+        },
         fetch_card = function(id) {
             data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards where id = ", id))
             as.data.table(data)

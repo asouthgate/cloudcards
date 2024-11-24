@@ -1,6 +1,7 @@
 library(data.table)
 
 source("R/optimisation.R")
+source("R/logging.R")
 
 #' DeckDatabase
 #'
@@ -56,14 +57,36 @@ DeckDatabase <- R6::R6Class(
             data <- DBI::dbExecute(private$con, query)
         },
         activate_new_cards = function(n) {
+
+            log4r::info(
+              logger,
+              message = "Activating new cards",
+              n = n
+            )
+
             cards <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards WHERE active = FALSE LIMIT ", n))
             cards <- as.data.table(cards)
             cards[, active := TRUE]
-            for (i in 1:nrow(cards)) {
+
+            log4r::info(
+              logger,
+              message = "Got inactive cards:",
+              cards = format(cards)
+            )
+
+            for (i in seq_len(nrow(cards))) {
               self$update_card(cards[i,])
             }
         },
         update_card = function(card) {         
+
+            log4r::info(
+              logger,
+              message = "Updating a card",
+              card = format(card)
+            )
+
+
             card$last_accessed <- Sys.time()
             card$due <- card$last_accessed + private$time_delta_calculator$cal_time_delta(card$counter)
             update_cols <- card[, setdiff(names(card), "id"), with = FALSE]

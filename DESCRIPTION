@@ -9,11 +9,12 @@ Depends:
     R (>= 3.5.0)
 Imports:
     DBI,
+    data.table,
+    dplyr,
+    log4r,
     RPostgres,
     R6,
-    testthat,
-    dplyr,
-    data.table
+    testthat
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

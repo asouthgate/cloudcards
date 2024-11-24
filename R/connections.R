@@ -41,7 +41,24 @@ DeckDatabase <- R6::R6Class(
             data <- DBI::dbGetQuery(private$con, paste0("SELECT * FROM cloudcards where id = ", id))
             as.data.table(data)
         },
+        write_qa = function(q, a) {
+            new_card <- data.table(
+                question = q,
+                answer = a,
+                counter = 0,
+                created_at = Sys.time(),
+                last_accessed = Sys.time()
+            )
+            self$write_new_card(new_card)
+        },
         write_new_card = function(new_card) {
+
+            log4r::info(
+              logger,
+              message = "Writing a new card",
+              card = format(new_card)
+            )
+
             new_card$due <- new_card$last_accessed + private$time_delta_calculator$cal_time_delta(new_card$counter)
             columns <- names(new_card)
             value_placeholders <- paste0("$", seq_along(columns), collapse = ", ")
@@ -85,7 +102,6 @@ DeckDatabase <- R6::R6Class(
               message = "Updating a card",
               card = format(card)
             )
-
 
             card$last_accessed <- Sys.time()
             card$due <- card$last_accessed + private$time_delta_calculator$cal_time_delta(card$counter)

@@ -10,7 +10,9 @@ ui <- fluidPage(
   actionButton("no", "No"),
   numericInput("integer_box", "Enter an integer:", value = 3, step = 1),
   actionButton("nextb", "Activate"),
-  actionButton("delete", "Delete")
+  actionButton("delete", "Delete"),
+  textInput("text_input", "Add a card", value = "Add a hash delimited q-a"),
+  actionButton("add_card", "Add new card")
 )
 
 server <- function(input, output, session) {
@@ -106,6 +108,21 @@ server <- function(input, output, session) {
   observeEvent(input$nextb, {
     cards <- deckdb$activate_new_cards(as.numeric(input$integer_box)) 
     ready_to_deal(TRUE)
+  })
+
+  observeEvent(input$add_card, {
+    qa <- input$text_input
+    spl <- strsplit(qa, "#")[[1]]
+    if (length(spl) == 2) {
+        q <- trimws(spl[1])
+        a <- trimws(spl[2])
+        qlen <- nchar(q)
+        alen <- nchar(a)
+        if (qlen > 0 && alen > 0) {
+           deckdb$write_qa(q, a)
+           updateTextInput(session, "text_input", value = "Add a hash delimited q-a")
+        }
+    }
   })
 
   output$question_answer <- renderText({
